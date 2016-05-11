@@ -1,34 +1,33 @@
 library ieee;
 use ieee.std_logic_1164.all;
-USE ieee.std_logic_unsigned.all;
+use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
-
 entity Keyboard is
 port (
 	datain, clkin : in std_logic ; -- PS2 clk and data
 	fclk, rst : in std_logic ;  -- filter clock
---	fok : out std_logic ;  -- data output enable signal
 	scancode : out std_logic_vector(7 downto 0) -- scan code signal output
 	) ;
 end Keyboard ;
-
 architecture rtl of Keyboard is
 type state_type is (delay, start, d0, d1, d2, d3, d4, d5, d6, d7, parity, stop, finish) ;
-signal data, clk, clk1, clk2, odd, fok : std_logic ; -- 毛刺处理内部信号, odd为奇偶校验
-signal code : std_logic_vector(7 downto 0) ; 
-signal state : state_type ;
+signal data,clk,clk1,clk2,odd,fok:std_logic;
+signal code:std_logic_vector(7 downto 0); 
+signal state:state_type;
 begin
 	clk1 <= clkin when rising_edge(fclk) ;
 	clk2 <= clk1 when rising_edge(fclk) ;
 	clk <= (not clk1) and clk2 ;
-	
 	data <= datain when rising_edge(fclk) ;
-	
-	odd <= code(0) xor code(1) xor code(2) xor code(3) 
-		xor code(4) xor code(5) xor code(6) xor code(7) ;
-	
-	scancode <= code when fok = '1' ;
-	
+	odd <= code(0) xor code(1) xor code(2) xor code(3) xor code(4) xor code(5) xor code(6) xor code(7) ;
+	process(fok)
+	begin
+		if fok='1' then
+			scancode<=code;
+		else
+			scancode<="00000000";
+		end if;
+	end process;
 	process(rst, fclk)
 	begin
 		if rst = '1' then
@@ -88,25 +87,23 @@ begin
 						code(7) <= data ;
 						state <= parity ;
 					end if ;
-				WHEN parity =>
-					IF clk = '1' then
+				when parity =>
+					if clk = '1' then
 						if (data xor odd) = '1' then
 							state <= stop ;
 						else
 							state <= delay ;
 						end if;
-					END IF;
-
-				WHEN stop =>
-					IF clk = '1' then
+					end if;
+				when stop =>
+					if clk = '1' then
 						if data = '1' then
 							state <= finish;
 						else
 							state <= delay;
 						end if;
-					END IF;
-
-				WHEN finish =>
+					end if;
+				when finish =>
 					state <= delay ;
 					fok <= '1' ;
 				when others =>
@@ -115,5 +112,3 @@ begin
 		end if ;
 	end process ;
 end rtl ;
-			
-						
