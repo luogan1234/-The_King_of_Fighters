@@ -3,11 +3,13 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 entity Keyboard is
-port (
-	datain, clkin : in std_logic ; -- PS2 clk and data
-	fclk, rst : in std_logic ;  -- filter clock
-	scancode : out std_logic_vector(7 downto 0) -- scan code signal output
-	) ;
+port(
+		keyboarddata:in std_logic;
+		keyboardclk:in std_logic;
+		clk100m: in std_logic;
+		rst : in std_logic; 
+		scancode : out std_logic_vector(7 downto 0)
+	);
 end Keyboard ;
 architecture rtl of Keyboard is
 type state_type is (delay, start, d0, d1, d2, d3, d4, d5, d6, d7, parity, stop, finish) ;
@@ -15,10 +17,10 @@ signal data,clk,clk1,clk2,odd,fok:std_logic;
 signal code:std_logic_vector(7 downto 0); 
 signal state:state_type;
 begin
-	clk1 <= clkin when rising_edge(fclk) ;
-	clk2 <= clk1 when rising_edge(fclk) ;
+	clk1 <= keyboardclk when rising_edge(clk100m) ;
+	clk2 <= clk1 when rising_edge(clk100m) ;
 	clk <= (not clk1) and clk2 ;
-	data <= datain when rising_edge(fclk) ;
+	data <= keyboarddata when rising_edge(clk100m) ;
 	odd <= code(0) xor code(1) xor code(2) xor code(3) xor code(4) xor code(5) xor code(6) xor code(7) ;
 	process(fok)
 	begin
@@ -28,13 +30,13 @@ begin
 			scancode<="00000000";
 		end if;
 	end process;
-	process(rst, fclk)
+	process(rst, clk100m)
 	begin
-		if rst = '1' then
+		if rst = '0' then
 			state <= delay ;
 			code <= (others => '0') ;
 			fok <= '0' ;
-		elsif rising_edge(fclk) then
+		elsif rising_edge(clk100m) then
 			fok <= '0' ;
 			case state is 
 				when delay =>
