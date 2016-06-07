@@ -38,8 +38,8 @@ begin
 	process (clk, reset)--区间像素数（含消隐区）
 	begin
 		if reset='0' then
-			x<=(others=>'0');
-			y<=(others=>'0');
+			x<=(others=>'1');
+			y<=(others=>'1');
 		elsif clk'event and clk='0' then
 			if x=799 then
 				x<=(others=>'0');
@@ -96,8 +96,8 @@ begin
 	process(reset,clk,x,y)
 	begin
 		if reset='0' then
-			request_pos_x<=(others=>'0');
-			request_pos_y<=(others=>'0');
+			request_pos_x<=(others=>'1');
+			request_pos_y<=(others=>'1');
 		elsif clk'event and clk='0' then
 			request_pos_x<=x;
 			request_pos_y<=y;

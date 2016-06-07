@@ -25,9 +25,9 @@ begin
 						when "00011011"=>internal(1)<='0';
 						when "00011100"=>internal(2)<='0';
 						when "00100011"=>internal(3)<='0';
-						when "00111011"=>internal(4)<='0';
-						when "01000010"=>internal(5)<='0';
-						when "00110011"=>internal(6)<='0';
+						when "00111011"=>internal(5)<='0';
+						when "01000010"=>internal(6)<='0';
+						when "00110011"=>internal(4)<='0';
 						when "01110101"=>
 							if e0='1' then
 								internal(7)<='0';
@@ -67,9 +67,9 @@ begin
 						when "00011011"=>internal(1)<='1';
 						when "00011100"=>internal(2)<='1';
 						when "00100011"=>internal(3)<='1';
-						when "00111011"=>internal(4)<='1';
-						when "01000010"=>internal(5)<='1';
-						when "00110011"=>internal(6)<='1';
+						when "00111011"=>internal(5)<='1';
+						when "01000010"=>internal(6)<='1';
+						when "00110011"=>internal(4)<='1';
 						when "01110101"=>
 							if e0='1' then
 								internal(7)<='1';

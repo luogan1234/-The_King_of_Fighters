@@ -4,14 +4,15 @@ use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 entity king is
 	port(
+		sram_address:out std_logic_vector(20 downto 0);
+		sram_CE,sram_OE,sram_WE:out std_logic;
+		sram_data:inout std_logic_vector(31 downto 0);
 		keyboarddata:in std_logic;
 		keyboardclk:in std_logic;
 		clk100m:in std_logic;
 		rst:in std_logic;
 		hs:out std_logic;
 		vs:out std_logic;
-		outa:out std_logic_vector(7 downto 0);
-		outb:out std_logic_vector(7 downto 0);
 		ored:out std_logic_vector (2 downto 0);
 		ogreen:out std_logic_vector (2 downto 0);
 		oblue:out std_logic_vector (2 downto 0)
@@ -52,16 +53,17 @@ component vga_controller is
 	);		
 end component;
 component logic is
-	port(
-		clk:in std_logic;
-		request_pos_x:in std_logic_vector(9 downto 0);
-		request_pos_y:in std_logic_vector(9 downto 0);
-		key0:in std_logic_vector(7 downto 0);
-		key1:in std_logic_vector(7 downto 0);
-		res_red:out std_logic_vector(2 downto 0);
-		res_green:out std_logic_vector(2 downto 0);
-		res_blue:out std_logic_vector(2 downto 0)
-	);
+port
+(
+	key0:in std_logic_vector(7 downto 0);
+	key1:in std_logic_vector(7 downto 0);
+	sram_address:out std_logic_vector(20 downto 0);
+	sram_CE,sram_OE,sram_WE:out std_logic;
+	sram_data:inout std_logic_vector(31 downto 0);
+	request_pos_x,request_pos_y:in std_logic_vector(9 downto 0);
+	clk1:in std_logic;
+	res_red,res_green,res_blue:out std_logic_vector(2 downto 0)
+);
 end component;
 signal scancode : std_logic_vector(7 downto 0);
 signal statusa:std_logic_vector(7 downto 0);
@@ -72,10 +74,8 @@ signal res_red:std_logic_vector(2 downto 0);
 signal res_green:std_logic_vector(2 downto 0);
 signal res_blue:std_logic_vector(2 downto 0);
 begin
-	outa<=statusa;
-	outb<=statusb;
 	u0: Keyboard port map(keyboarddata,keyboardclk,clk100m,rst,scancode);
 	u1: keyboardstate port map(clk100m,scancode,statusa,statusb);
 	u2: VGA_controller port map(hs,vs,ored,ogreen,oblue,request_pos_x,request_pos_y,res_red,res_green,res_blue,rst,clk100m);
-	u3: logic port map(clk100m,request_pos_x,request_pos_y,statusa,statusb,res_red,res_green,res_blue);
+	u3: logic port map(statusa,statusb,sram_address,sram_CE,sram_OE,sram_WE,sram_data,request_pos_x,request_pos_y,clk100m,res_red,res_green,res_blue);
 end behave;
