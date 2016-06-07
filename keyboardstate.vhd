@@ -1,13 +1,17 @@
+---------------------------------------------------------------
+--Contributor:杜家驹
+--键盘信号处理，将scancode转换为每一个按键的状态
+---------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 entity keyboardstate is
 	port(
-		clk:in std_logic;
-		scancode:in std_logic_vector(7 downto 0);
-		statusa:out std_logic_vector(7 downto 0);
-		statusb:out std_logic_vector(7 downto 0)
+		clk:in std_logic;--100M时钟
+		scancode:in std_logic_vector(7 downto 0);--键盘扫描码
+		statusa:out std_logic_vector(7 downto 0);--人物A按键状态
+		statusb:out std_logic_vector(7 downto 0)--人物B按键状态
 	);
 end keyboardstate;
 architecture maps of keyboardstate is

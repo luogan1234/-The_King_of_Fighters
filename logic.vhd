@@ -1,3 +1,7 @@
+---------------------------------------------------------------
+--Contributor:丁铭 罗干
+--游戏逻辑与图片缓存模块
+---------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
@@ -92,10 +96,6 @@ begin
 	 		if(not beginned)then
 		   if(key0(0) = '1')then
 			  beginned<= true;
---			  object_used(1 to 4) <= "1111";
---			  object_used(5 to 7) <= "000";
---			  p1_hp <= 200;
---			  p2_hp <= 200;
 			end if;
 		elsif(clk1'event and clk1 = '0' )then
 				if cnt0>=10000000 then
@@ -455,36 +455,7 @@ begin
 		end if;
 	end if;
 end process;
---测试
---	process (clk1)
---	variable dd:integer:=0;
---	variable cc:integer range 0 to 15;
---	begin
---		if clk1'event and clk1='1' then
---			if dd=3000000 then
---				dd:=0;
---				cc:=cc+1;
---				if cc=10 then
---					cc:=0;
---				end if;
---				object_pos_x(1)<=321+cc*10;
---				object_pos_x(2)<=601+cc*10;
---				object_pos_y(1)<=100-cc;
---				object_pos_y(2)<=260+cc;
---				object_number(1)<=1+cc;
---				object_number(2)<=12+cc;
---				object_reverse(1)<='1';
---				object_reverse(2)<='0';
---				object_used(1)<='1';
---				object_used(2)<='1';
---				p1_hp<=150-cc*10;
---				p2_hp<=130+cc*10;
---			else
---				dd:=dd+1;
---			end if;
---		end if;
---	end process;
-	
+
 	process (clk1)
 	variable divide:integer range 0 to 3:=0;
 	variable x0,y0,x1,y1:integer range 0 to 1023;

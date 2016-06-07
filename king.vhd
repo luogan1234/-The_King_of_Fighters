@@ -1,3 +1,7 @@
+---------------------------------------------------------------
+--Contributor:丁铭 罗干 杜家驹
+--顶层文件
+---------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -7,13 +11,13 @@ entity king is
 		sram_address:out std_logic_vector(20 downto 0);
 		sram_CE,sram_OE,sram_WE:out std_logic;
 		sram_data:inout std_logic_vector(31 downto 0);
-		keyboarddata:in std_logic;
-		keyboardclk:in std_logic;
-		clk100m:in std_logic;
-		rst:in std_logic;
+		keyboarddata:in std_logic;--键盘信号
+		keyboardclk:in std_logic;--键盘时钟
+		clk100m:in std_logic;--100M时钟
+		rst:in std_logic;--reset
 		hs:out std_logic;
-		vs:out std_logic;
-		ored:out std_logic_vector (2 downto 0);
+		vs:out std_logic;--场同步和行同步信号
+		ored:out std_logic_vector (2 downto 0);--输出颜色
 		ogreen:out std_logic_vector (2 downto 0);
 		oblue:out std_logic_vector (2 downto 0)
 	);
@@ -21,11 +25,11 @@ end king;
 architecture behave of king is
 component Keyboard is
 	port(
-		keyboarddata: in std_logic ; -- PS2 clk
-		keyboardclk: in std_logic;--PS2 data
-		clk100m: in std_logic ;  -- filter clock
+		keyboarddata: in std_logic ;
+		keyboardclk: in std_logic;
+		clk100m: in std_logic ;
 		rst : in std_logic ; 
-		scancode : out std_logic_vector(7 downto 0) -- scan code signal output
+		scancode : out std_logic_vector(7 downto 0)
 	) ;
 end component ;
 component keyboardstate is
@@ -49,7 +53,7 @@ component vga_controller is
 		res_green:in std_logic_vector(2 downto 0);
 		res_blue:in std_logic_vector(2 downto 0);
 		reset:in std_logic;
-		clk100m:in std_logic			--100M时钟输入
+		clk100m:in std_logic
 	);		
 end component;
 component logic is

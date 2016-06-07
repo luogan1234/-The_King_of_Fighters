@@ -1,28 +1,32 @@
+---------------------------------------------------------------
+--Contributor:杜家驹
+--VGA Adapter
+---------------------------------------------------------------
 library	ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 entity vga_controller is
 	port (
-		hs:out std_logic;		--行同步、场同步信号
+		hs:out std_logic;--行同步、场同步信号
 		vs:out std_logic;
-		ored:out std_logic_vector (2 downto 0);
+		ored:out std_logic_vector (2 downto 0);--输出的颜色
 		ogreen:out std_logic_vector (2 downto 0);
 		oblue:out std_logic_vector (2 downto 0);
-		request_pos_x:out std_logic_vector(9 downto 0);
+		request_pos_x:out std_logic_vector(9 downto 0);--向颜色计算模块提出下一个应该计算的像素位置
 		request_pos_y:out std_logic_vector(9 downto 0);
-		res_red:in std_logic_vector(2 downto 0);
+		res_red:in std_logic_vector(2 downto 0);--颜色计算模块提供的颜色
 		res_green:in std_logic_vector(2 downto 0);
 		res_blue:in std_logic_vector(2 downto 0);
 		reset:in std_logic;
-		clk100m:in std_logic			--100M时钟输入
+		clk100m:in std_logic--100M时钟输入
 	);
 end entity vga_controller;
 architecture behave of vga_controller is
 	signal clk:std_logic;
 	signal rt,gt,bt:std_logic_vector(2 downto 0);
 	signal hst,vst:std_logic;
-	signal x:std_logic_vector(9 downto 0);		--X坐标
-	signal y	:std_logic_vector(9 downto 0);		--Y坐标
+	signal x:std_logic_vector(9 downto 0);	--X坐标
+	signal y	:std_logic_vector(9 downto 0);--Y坐标
 begin
 	process (clk100m)
 	variable counter:integer:=0;
@@ -53,7 +57,7 @@ begin
 			end if;
 		end if;
 	end process;
-	process (clk, reset)	--行同步信号产生（同步宽度96，前沿16）
+	process (clk, reset)--行同步信号产生（同步宽度96，前沿16）
 	begin
 		if reset = '0' then
 			hst <= '1';
@@ -65,7 +69,7 @@ begin
 			end if;
 		end if;
 	end process;
-	process (clk, reset)	--场同步信号产生（同步宽度2，前沿10）
+	process (clk, reset)--场同步信号产生（同步宽度2，前沿10）
 	begin
 		if reset = '0' then
 			vst <= '1';
@@ -103,7 +107,7 @@ begin
 			request_pos_y<=y;
 		end if;
 	end process;
-	process(reset,clk,x,y)  -- XY坐标定位控制
+	process(reset,clk,x,y)--XY坐标定位控制
 	begin  
 		if reset='0' then
 			rt<="000";

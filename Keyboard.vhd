@@ -1,14 +1,18 @@
+---------------------------------------------------------------
+--Contributor:杜家驹
+--键盘信号处理，把PS/2键盘的信号转换为scancode
+---------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 entity Keyboard is
 port(
-		keyboarddata:in std_logic;
-		keyboardclk:in std_logic;
-		clk100m: in std_logic;
-		rst : in std_logic; 
-		scancode : out std_logic_vector(7 downto 0)
+		keyboarddata:in std_logic;--键盘数据
+		keyboardclk:in std_logic;--键盘时钟
+		clk100m: in std_logic;--100M时钟
+		rst : in std_logic; --reset
+		scancode : out std_logic_vector(7 downto 0)--扫描码
 	);
 end Keyboard ;
 architecture rtl of Keyboard is
