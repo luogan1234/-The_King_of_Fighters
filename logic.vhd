@@ -16,39 +16,40 @@ port
 	sram_CE,sram_OE,sram_WE:out std_logic;
 	sram_data:inout std_logic_vector(31 downto 0);
 	request_pos_x,request_pos_y:in std_logic_vector(9 downto 0);	--询问的位置坐标x,y
-	clk1:in std_logic;	--100MHz，询问的触发信号用25MHz，自行分频，上升沿时罗干写入当前颜色的值，下降沿时杜家驹读取颜色并把像素+1，读取颜色的触发信号用100MHz，因为一个像素的颜色可能要读多次（这里设计3次最多）
+	clk1:in std_logic;	--100MHz，询问的触发信号用25MHz，自行分频，上升沿时罗干写入当前颜色的值，下降沿时杜家驹读取颜色并把像素+1
 	res_red,res_green,res_blue:out std_logic_vector(2 downto 0)	--颜色的值
 );
 end logic;
 
 architecture bhv of logic is
-type pos_info is array(0 to 39) of std_logic_vector(7 downto 0);
+type pos_info is array(0 to 39) of std_logic_vector(7 downto 0);	--一次处理40个像素颜色
 type image_length is array(0 to 27) of integer range 0 to 1023;
 type image_address is array(0 to 27) of integer range 0 to 524287;
 type index0 is array(0 to 7) of integer range 0 to 1023;
 type index1 is array(0 to 7) of integer range 0 to 63;
 signal pos_color,pos_color_temp:pos_info;	--保存一轮的位置颜色的结果
-signal deal_line,deal_x:integer:=0;	--当前所处理的行和起始列
-signal background_pos_x,background_pos_y:integer;	--这一轮背景的位置
---存在的物体的中心坐标，背景另外处理
+signal deal_line,deal_x:integer:=0;	--当前所处理40个像素的行和起始列位置
+signal background_pos_x,background_pos_y:integer;	--这一轮背景图片的位置
+--存在的物体的中心坐标，背景另外处理，分别是背景，人物1和2，战斗界面人物小头像，开始界面，胜利的P1和P2win字体位置
 signal object_pos_x: index0:=(0,300, 500, 0,600,0,249,249);
 signal object_pos_y: index0:= (0,300, 300,0,0,0,212,212);
---存在的物体左右翻转情况
-signal object_reverse: std_logic_vector(0 to 7):= "01000000";
-signal object_used: std_logic_vector(0 to 7):= "00000100";
-signal p2_hp:integer range 0 to 255 := 200;	--双方的血量
-signal p1_hp:integer range 0 to 255 := 200;	--双方的血量
-signal object_number:index1:=(0,1,12,23,24,25,26,27);	--存在的物体编号
-
+signal object_reverse: std_logic_vector(0 to 7):= "01000000";	--存在的物体左右翻转情况
+signal object_used: std_logic_vector(0 to 7):= "00000100";	--物体是否使用过
+signal p1_hp:integer range 0 to 255 := 200;	--p1的血量
+signal p2_hp:integer range 0 to 255 := 200;	--p2的血量
+signal object_number:index1:=(0,1,12,23,24,25,26,27);	--存在的物体编号，编号内容见文档
+--暂存这一次刷新的物体信息，防止刷到一半值修改导致错位
 signal object_pos_x_temp:index0;
 signal object_pos_y_temp:index0;
 signal object_reverse_temp,object_used_temp:std_logic_vector(0 to 7):="00000000";
 signal object_number_temp:index1;
 signal start_x_sig,pos_temp:integer;	--像素起始位置
 signal isrotate_sig:boolean:=false;	--像素是否翻转
+--中间计算的缓存的信号
 signal x0_sig,y0_sig:integer:=0;
 signal ss_sig:integer range 0 to 4:=0;
 signal choose_sig:integer range 0 to 63;
+--图像长宽，中心坐标和在sram的起始地址
 constant image_n:image_length:=(960,160,160,103,225,228,89,205,253,249,183,177,118,122,118,138,226,159,148,238,237,152,159,40,40,640,142,142);
 constant image_m:image_length:=(480,218,218,230,225,230,322,177,109,190,194,221,223,238,234,240,218,206,156,108,204,209,159,40,40,480,56,56);
 constant center_n:image_length:=(0,80,80,51,112,114,44,102,126,124,91,88,59,61,59,69,113,79,74,119,118,76,79,0,0,0,0,0);
@@ -67,26 +68,11 @@ constant ATTRANGE: integer:= 100;
 signal s0,s1: status:= stop;
 signal scnt0,scnt1 : integer:= 0;--0 1-4 5-7
 signal fallcnt0, fallcnt1 : integer:= 0;
-signal clk,clk50,clk25 : std_logic;
 signal beginned: boolean := false;
 begin
 	sram_CE<='0';	--保持读的状态
 	sram_OE<='0';
 	sram_WE<='1';
-	
-	process (clk1)
-	begin
-		if clk1'event and clk1='1' then
-			clk50<=not clk50;
-		end if;
-	end process;
-	process (clk50)
-	begin
-		if clk50'event and clk50='1' then
-			clk25<=not clk25;
-		end if;
-	end process;
---	 
 
 	 process (clk1, key0(0))
     variable f0,f1: status;
@@ -456,14 +442,14 @@ begin
 	end if;
 end process;
 
-	process (clk1)
+	process (clk1)	--和杜家驹进行交互的部分
 	variable divide:integer range 0 to 3:=0;
 	variable x0,y0,x1,y1:integer range 0 to 1023;
 	variable last_xx:integer range 0 to 1023:=0;
 	variable temp_red,temp_green,temp_blue:std_logic_vector(2 downto 0);
 	begin
 		if clk1'event and clk1='1' then
-			if divide=3 then
+			if divide=3 then	--提供当前像素颜色信息
 				divide:=0;
 				temp_red:="111";
 				temp_green:="111";
@@ -471,12 +457,12 @@ end process;
 				x0:=conv_integer(request_pos_x);
 				y0:=conv_integer(request_pos_y);
 				x1:=x0-last_xx;
-				if x0<640 and y0<480 and pos_color(x1)/="11110011" then
+				if x0<640 and y0<480 and pos_color(x1)/="11110011" then	--用特殊颜色代表透明
 					temp_red:=pos_color(x1)(7 downto 5);
 					temp_green:=pos_color(x1)(4 downto 2);
 					temp_blue:=pos_color(x1)(1 downto 0) & "0";
 				end if;
-				if y0>=20 and y0<40 and object_used_temp(1)='1' and object_used_temp(2)='1' then
+				if y0>=20 and y0<40 and object_used_temp(1)='1' and object_used_temp(2)='1' then	--修改血条
 					if (x0>=50 and x0<50+p1_hp) or (x0<590 and x0>=590-p2_hp) then
 						temp_red:="111";
 						temp_green:="000";
@@ -492,7 +478,7 @@ end process;
 					res_green<="000";
 					res_blue<="000";
 				end if;
-				if x0=640 and y0=480 then
+				if x0=640 and y0=480 then	--一帧刷完读取当前物体信息
 					object_number_temp<=object_number;
 					object_pos_x_temp<=object_pos_x;
 					object_pos_y_temp<=object_pos_y;
@@ -517,7 +503,7 @@ end process;
 						background_pos_y<=0;
 					end if;
 				end if;
-				if x0<640 and y0<480 then
+				if x0<640 and y0<480 then	--记录当前要做的40个像素位置信息，并把之前做好的40个像素颜色备份依次输出
 					if x0=39 or x0=79 or x0=119 or x0=159 or x0=199 or x0=239 or x0=279 or x0=319 or x0=359 or x0=399 or x0=439 or x0=479 or x0=519 or x0=559 then
 						last_xx:=x0+1;
 						pos_color<=pos_color_temp;
@@ -548,7 +534,8 @@ end process;
 			end if;
 		end if;
 	end process;
-	process (clk1)
+	
+	process (clk1)	--sram读取部分，计算40个像素的颜色信息
 	variable dd:integer range 0 to 3:=0;
 	variable last_line:integer:=1023;
 	variable last_x:integer:=0;
@@ -564,7 +551,7 @@ end process;
 		if clk1'event and clk1='0' then
 			if dd=3 then
 				dd:=0;
-				if deal_line/=last_line or deal_x/=last_x then
+				if deal_line/=last_line or deal_x/=last_x then	--判断是否是新的40个像素
 					for i in 0 to 39 loop
 						pos_color_temp(i)<="11110011";
 					end loop;
@@ -573,7 +560,7 @@ end process;
 					last_x:=deal_x;
 				else
 					p:=true;
-					for i in 0 to 7 loop
+					for i in 0 to 7 loop	--获取下一次sram需要读取的地址信息
 						if i>=deal and p and object_used_temp(i)='1' then
 							choose:=object_number_temp(i);
 							if choose<23 then
@@ -639,10 +626,10 @@ end process;
 						ss_sig<=0;
 					end if;
 				end if;
-			elsif dd=0 then
+			elsif dd=0 then	--最复杂的乘法计算单独一轮
 				dd:=1;
 				pos_temp<=y0_sig*address_n(choose_sig)+x0_sig;
-			elsif dd=1 then
+				elsif dd=1 then	--读取上一轮的sram值信息，并把这一轮要读取的地址更新
 				dd:=2;
 				for i in 1 to 4 loop
 					if i<=ss then
